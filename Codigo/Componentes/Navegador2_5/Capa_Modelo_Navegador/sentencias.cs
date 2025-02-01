@@ -130,21 +130,23 @@ namespace Capa_Modelo_Navegador
             }
         }
 
-        public string ObtenerValorClave(string sTabla, string sCampoClave, string sCampoDescriptivo, string valorDescriptivo)
+        public string ObtenerValorClave(string sTabla, string sCampoClave, string sCampoDescriptivo, string sValorDescriptivo)
         {
-            string sQuery = $"SELECT {sCampoClave} FROM {sTabla} WHERE {sCampoDescriptivo} = '{valorDescriptivo}'";
-            OdbcCommand command = new OdbcCommand(sQuery, cn.ProbarConexion());
-            string resultado = command.ExecuteScalar()?.ToString();
-            Console.WriteLine(sQuery);
-            return resultado;
+            string sConsulta = $"SELECT {sCampoClave} FROM {sTabla} WHERE {sCampoDescriptivo} = '{sValorDescriptivo}'";
+            string sResultado = null;
+
+            using (OdbcConnection oConexion = cn.ProbarConexion())
+            {
+                using (OdbcCommand oComando = new OdbcCommand(sConsulta, oConexion))
+                {
+                    sResultado = oComando.ExecuteScalar()?.ToString();
+                }
+            }
+
+            Console.WriteLine(sConsulta);
+            return sResultado;
         }
-
-
-
-
-
         //******************************************** CODIGO HECHO POR BRAYAN HERNANDEZ ***************************** 
-
 
         //******************************************** CODIGO HECHO POR EMANUEL BARAHONA ***************************** 
         // Método que obtiene el último ID de una tabla
@@ -152,27 +154,23 @@ namespace Capa_Modelo_Navegador
         {
             string[] sCamposDesc = ObtenerCampos(sTabla);
             string sSql = "SELECT MAX(" + sCamposDesc[0] + ") FROM " + sTabla + ";";
-            string sId = "";
-            OdbcCommand command = new OdbcCommand(sSql, cn.ProbarConexion());
-            OdbcDataReader reader = command.ExecuteReader();
-            if (reader.HasRows)
+            string sId = "1";
+
+            using (OdbcConnection oConexion = cn.ProbarConexion())
             {
-                if (reader.Read())
+                using (OdbcCommand oComando = new OdbcCommand(sSql, oConexion))
                 {
-                    if (reader.GetValue(0).ToString() == null || reader.GetValue(0).ToString() == "")
+                    using (OdbcDataReader oLector = oComando.ExecuteReader())
                     {
-                        sId = "1";
-                    }
-                    else
-                    {
-                        sId = reader.GetValue(0).ToString();
+                        if (oLector.HasRows && oLector.Read())
+                        {
+                            string sValor = oLector.GetValue(0)?.ToString();
+                            sId = string.IsNullOrEmpty(sValor) ? "1" : sValor;
+                        }
                     }
                 }
             }
-            else
-            {
-                sId = "1";
-            }
+
             return sId;
         }
 
@@ -181,19 +179,25 @@ namespace Capa_Modelo_Navegador
         {
             string[] sCampos = new string[30];
             int iIndex = 0;
-            OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla + "", cn.ProbarConexion());
-            OdbcDataReader reader = command.ExecuteReader();
-            while (reader.Read())
+
+            using (OdbcConnection oConexion = cn.ProbarConexion())
             {
-                sCampos[iIndex] = reader.GetValue(5).ToString();
-                iIndex++;
+                using (OdbcCommand oComando = new OdbcCommand("DESCRIBE " + sTabla, oConexion))
+                {
+                    using (OdbcDataReader oLector = oComando.ExecuteReader())
+                    {
+                        while (oLector.Read())
+                        {
+                            sCampos[iIndex] = oLector.GetValue(5)?.ToString();
+                            iIndex++;
+                        }
+                    }
+                }
             }
+
             return sCampos;
         }
-
         //******************************************** CODIGO HECHO POR EMANUEL BARAHONA ***************************** 
-
-
 
         //******************************************** CODIGO HECHO POR ANIKA ESCOTO ***************************** 
         // Método para obtener el ID de usuario basado en su nombre de usuario
@@ -201,406 +205,422 @@ namespace Capa_Modelo_Navegador
         {
             string sSql = "SELECT Pk_id_usuario FROM tbl_usuarios WHERE username_usuario = ?";
 
-            using (OdbcCommand command = new OdbcCommand(sSql, cn.ProbarConexion()))
+            using (OdbcConnection oConexion = cn.ProbarConexion())
             {
-                command.Parameters.AddWithValue("@username", sUsername);
-
-                using (OdbcDataReader reader = command.ExecuteReader())
+                using (OdbcCommand oComando = new OdbcCommand(sSql, oConexion))
                 {
-                    if (reader.Read())
+                    oComando.Parameters.AddWithValue("@username", sUsername);
+
+                    using (OdbcDataReader oLector = oComando.ExecuteReader())
                     {
-                        return reader["Pk_id_usuario"].ToString();
-                    }
-                    else
-                    {
-                        return "-1";
+                        return oLector.Read() ? oLector["Pk_id_usuario"].ToString() : "-1";
                     }
                 }
             }
         }
-
         // Método que cuenta los campos en una tabla
         public int ContarAlias(string sTabla)
         {
             int iCampos = 0;
 
-            try
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla + "", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
-
-                while (reader.Read())
+                try
                 {
-                    iCampos++;
+                    using (OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla, connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                iCampos++;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message.ToString() + " \nError en obtenerTipo, revise los parámetros de la tabla  \n -" + sTabla.ToUpper() + "\n -");
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message.ToString() + " \nError en obtenerTipo, revise los parámetros de la tabla  \n -" + sTabla.ToUpper() + "\n -");
-            }
+
             return iCampos;
         }
-        //******************************************** CODIGO HECHO POR ANIKA ESCOTO ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR JOEL LOPEZ ***************************** 
-        // Método para contar registros en la tabla de ayuda
         public int ContarReg(string sIdIndice)
         {
             int iCampos = 0;
-            try
-            {
-                OdbcCommand command = new OdbcCommand("SELECT * FROM ayuda WHERE id_ayuda = " + sIdIndice + ";", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
 
-                while (reader.Read())
+            using (OdbcConnection connection = cn.ProbarConexion())
+            {
+                try
                 {
-                    iCampos++;
+                    using (OdbcCommand command = new OdbcCommand("SELECT * FROM ayuda WHERE id_ayuda = " + sIdIndice + ";", connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                iCampos++;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message.ToString() + " \nError en obtenerTipo, revise los parámetros de la tabla  \n -" + sIdIndice.ToUpper() + "\n -");
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message.ToString() + " \nError en obtenerTipo, revise los parámetros de la tabla  \n -" + sIdIndice.ToUpper() + "\n -");
-            }
+
             return iCampos;
         }
-
 
         public string ModRuta(string sIdAyuda)
         {
             string sRuta = "";
-            string sQuery = "SELECT Ruta FROM ayuda WHERE Id_ayuda = ?"; // Parámetro seguro
+            string sQuery = "SELECT Ruta FROM ayuda WHERE Id_ayuda = ?";
 
-            using (OdbcCommand command = new OdbcCommand(sQuery, cn.ProbarConexion()))
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                command.Parameters.AddWithValue("id_ayuda", sIdAyuda);
-                using (OdbcDataReader reader = command.ExecuteReader())
+                using (OdbcCommand command = new OdbcCommand(sQuery, connection))
                 {
-                    if (reader.Read())
+                    command.Parameters.AddWithValue("id_ayuda", sIdAyuda);
+                    using (OdbcDataReader reader = command.ExecuteReader())
                     {
-                        sRuta = reader.GetString(0); // Asignamos el valor de la columna Ruta
+                        if (reader.Read())
+                        {
+                            sRuta = reader.GetString(0);
+                        }
                     }
                 }
             }
 
             return sRuta;
         }
-        //******************************************** CODIGO HECHO POR JOEL LOPEZ ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR JORGE AVILA ***************************** 
-        // Método que obtiene la ruta del reporte basada en el ID de la aplicación
         public string RutaReporte(string sIdIndice)
         {
             string sIndice2 = "";
-            OdbcCommand command = new OdbcCommand("SELECT ruta FROM tbl_aplicaciones WHERE Pk_id_aplicacion = " + sIdIndice + ";", cn.ProbarConexion());
-            OdbcDataReader reader = command.ExecuteReader();
 
-            if (reader.Read())
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                sIndice2 = reader["ruta"].ToString();
+                using (OdbcCommand command = new OdbcCommand("SELECT ruta FROM tbl_aplicaciones WHERE Pk_id_aplicacion = " + sIdIndice + ";", connection))
+                {
+                    using (OdbcDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            sIndice2 = reader["ruta"].ToString();
+                        }
+                    }
+                }
             }
 
-            reader.Close();
             return sIndice2;
         }
 
-        // Método para obtener un índice modificado basado en el ID de ayuda
         public string ModIndice(string sIdAyuda)
         {
             string sIndice = "";
-            string sQuery = "SELECT indice FROM ayuda WHERE id_ayuda = ?"; // Parámetro seguro
+            string sQuery = "SELECT indice FROM ayuda WHERE id_ayuda = ?";
 
-            using (OdbcCommand command = new OdbcCommand(sQuery, cn.ProbarConexion()))
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                command.Parameters.AddWithValue("Id_ayuda", sIdAyuda);
-                using (OdbcDataReader reader = command.ExecuteReader())
+                using (OdbcCommand command = new OdbcCommand(sQuery, connection))
                 {
-                    if (reader.Read())
+                    command.Parameters.AddWithValue("Id_ayuda", sIdAyuda);
+                    using (OdbcDataReader reader = command.ExecuteReader())
                     {
-                        sIndice = reader.GetString(0); // Asignamos el valor de la columna Indice
+                        if (reader.Read())
+                        {
+                            sIndice = reader.GetString(0);
+                        }
                     }
                 }
             }
 
             return sIndice;
         }
-        //******************************************** CODIGO HECHO POR JORGE AVILA ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR DIEGO MARROQUIN ***************************** 
-        // Método para probar si una tabla existe en la base de datos
         public string ProbarTabla(string sTabla)
         {
             string sError = "";
-            try
+
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                OdbcCommand command = new OdbcCommand("SELECT * FROM " + sTabla + ";", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
-                reader.Read();
+                try
+                {
+                    using (OdbcCommand command = new OdbcCommand("SELECT * FROM " + sTabla + ";", connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            reader.Read();
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    sError = "La tabla " + sTabla.ToUpper() + " no existe.";
+                }
             }
-            catch (Exception)
-            {
-                sError = "La tabla " + sTabla.ToUpper() + " no existe.";
-            }
+
             return sError;
         }
 
-        // Método para probar si una tabla tiene un campo de estado
         public string ProbarEstado(string sTabla)
         {
             string sError = "";
-            try
+
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                OdbcCommand command = new OdbcCommand("SELECT estado FROM " + sTabla + ";", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
-                reader.Read();
+                try
+                {
+                    using (OdbcCommand command = new OdbcCommand("SELECT estado FROM " + sTabla + ";", connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            reader.Read();
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    sError = "La tabla " + sTabla.ToUpper() + " no contiene el campo de ESTADO";
+                }
             }
-            catch (Exception)
-            {
-                sError = "La tabla " + sTabla.ToUpper() + " no contiene el campo de ESTADO";
-            }
+
             return sError;
         }
 
-        // Método que cuenta los registros activos en una tabla
         public int ProbarRegistros(string sTabla)
         {
             int iRegistros = 0;
-            try
+
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                OdbcCommand command = new OdbcCommand("SELECT * FROM " + sTabla + " where estado=1;", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
-                while (reader.Read())
+                try
                 {
-                    iRegistros++;
+                    using (OdbcCommand command = new OdbcCommand("SELECT * FROM " + sTabla + " where estado=1;", connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                iRegistros++;
+                            }
+                        }
+                    }
                 }
-            }
-            catch (Exception)
-            {
+                catch (Exception)
+                {
+                }
             }
 
             return iRegistros;
         }
-        //******************************************** CODIGO HECHO POR DIEGO MARROQUIN ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR BRAYAN HERNANDEZ ***************************** 
-        // Método para obtener los nombres de los campos de una tabla
         public string[] ObtenerCampos(string sTabla)
         {
             string[] sCampos = new string[30];
             int iIndex = 0;
-            OdbcConnection conn = null;
 
-            try
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                conn = cn.ProbarConexion();
-                OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla + "", conn);
-                OdbcDataReader reader = command.ExecuteReader();
-
-                while (reader.Read())
+                try
                 {
-                    sCampos[iIndex] = reader.GetValue(0).ToString();
-                    iIndex++;
+                    using (OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla, connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                sCampos[iIndex] = reader.GetValue(0).ToString();
+                                iIndex++;
+                            }
+                        }
+                    }
                 }
-
-                reader.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message.ToString() + " \nError en asignarCombo, revise los parámetros \n -" + sTabla);
-            }
-            finally
-            {
-                if (conn != null && conn.State == ConnectionState.Open)
+                catch (Exception ex)
                 {
-                    conn.Close();
-                    Console.WriteLine("Conexión cerrada después de obtener los campos");
+                    Console.WriteLine(ex.Message.ToString() + " \nError en asignarCombo, revise los parámetros \n -" + sTabla);
                 }
             }
 
             return sCampos;
         }
-        //******************************************** CODIGO HECHO POR BRAYAN HERNANDEZ ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR SEBASTIAN LETONA ***************************** 
-        // Método para obtener las propiedades de las columnas de una tabla
         public List<(string nombreColumna, bool esAutoIncremental, bool esClaveForanea, bool esTinyInt)> ObtenerColumnasYPropiedades(string sNombreTabla)
         {
             List<(string, bool, bool, bool)> lColumnas = new List<(string, bool, bool, bool)>();
 
-            try
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                string sQueryColumnas = $"SHOW COLUMNS FROM {sNombreTabla};";
-                OdbcCommand comando = new OdbcCommand(sQueryColumnas, cn.ProbarConexion());
-                OdbcDataReader lector = comando.ExecuteReader();
-
-                HashSet<string> clavesForaneas = new HashSet<string>();
-
-                string sQueryClavesForaneas = $@"
-                    SELECT COLUMN_NAME
-                    FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-                    WHERE TABLE_NAME = '{sNombreTabla}' AND REFERENCED_TABLE_NAME IS NOT NULL;";
-                OdbcCommand comandoClaves = new OdbcCommand(sQueryClavesForaneas, cn.ProbarConexion());
-                OdbcDataReader lectorClaves = comandoClaves.ExecuteReader();
-
-                while (lectorClaves.Read())
+                try
                 {
-                    string sNombreColumnaForanea = lectorClaves.GetString(0);
-                    clavesForaneas.Add(sNombreColumnaForanea);
+                    string sQueryColumnas = $"SHOW COLUMNS FROM {sNombreTabla};";
+                    using (OdbcCommand comando = new OdbcCommand(sQueryColumnas, connection))
+                    {
+                        using (OdbcDataReader lector = comando.ExecuteReader())
+                        {
+                            HashSet<string> clavesForaneas = new HashSet<string>();
+
+                            string sQueryClavesForaneas = $@"
+                        SELECT COLUMN_NAME
+                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                        WHERE TABLE_NAME = '{sNombreTabla}' AND REFERENCED_TABLE_NAME IS NOT NULL;";
+                            using (OdbcCommand comandoClaves = new OdbcCommand(sQueryClavesForaneas, connection))
+                            {
+                                using (OdbcDataReader lectorClaves = comandoClaves.ExecuteReader())
+                                {
+                                    while (lectorClaves.Read())
+                                    {
+                                        string sNombreColumnaForanea = lectorClaves.GetString(0);
+                                        clavesForaneas.Add(sNombreColumnaForanea);
+                                    }
+                                }
+                            }
+
+                            while (lector.Read())
+                            {
+                                string sNombreColumna = lector.GetString(0);
+                                string sTipoColumna = lector.GetString(1);
+                                string sColumnaExtra = lector.GetString(5);
+
+                                bool bEsAutoIncremental = sColumnaExtra.Contains("auto_increment");
+                                bool bEsClaveForanea = clavesForaneas.Contains(sNombreColumna);
+                                bool bEsTinyInt = sTipoColumna.StartsWith("tinyint");
+
+                                lColumnas.Add((sNombreColumna, bEsAutoIncremental, bEsClaveForanea, bEsTinyInt));
+                            }
+                        }
+                    }
                 }
-
-                lectorClaves.Close();
-
-                while (lector.Read())
+                catch (Exception ex)
                 {
-                    string sNombreColumna = lector.GetString(0);
-                    string sTipoColumna = lector.GetString(1);
-                    string sColumnaExtra = lector.GetString(5);
-
-                    bool bEsAutoIncremental = sColumnaExtra.Contains("auto_increment");
-                    bool bEsClaveForanea = clavesForaneas.Contains(sNombreColumna);
-                    bool bEsTinyInt = sTipoColumna.StartsWith("tinyint");
-
-                    lColumnas.Add((sNombreColumna, bEsAutoIncremental, bEsClaveForanea, bEsTinyInt));
+                    Console.WriteLine("Error al obtener columnas: " + ex.Message);
                 }
-
-                lector.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error al obtener columnas: " + ex.Message);
             }
 
             return lColumnas;
         }
-        //******************************************** CODIGO HECHO POR SEBASTIAN LETONA ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR PABLO FLORES ***************************** 
-        // Método para ejecutar una serie de consultas SQL dentro de una transacción
         public void EjecutarQueryConTransaccion(List<string> sQueries)
         {
-            OdbcConnection connection = cn.ProbarConexion();
-            OdbcTransaction transaction = null;
-
-            try
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                transaction = connection.BeginTransaction();
+                OdbcTransaction transaction = null;
 
-                foreach (string sQuery in sQueries)
+                try
                 {
-                    OdbcCommand command = new OdbcCommand(sQuery, connection, transaction);
-                    command.ExecuteNonQuery();
-                }
+                    transaction = connection.BeginTransaction();
 
-                transaction.Commit();
-            }
-            catch (Exception ex)
-            {
-                if (transaction != null)
-                {
-                    transaction.Rollback();
+                    foreach (string sQuery in sQueries)
+                    {
+                        using (OdbcCommand command = new OdbcCommand(sQuery, connection, transaction))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                    }
+
+                    transaction.Commit();
                 }
-                Console.WriteLine("Error en la transacción: " + ex.Message);
-            }
-            finally
-            {
-                connection.Close();
+                catch (Exception ex)
+                {
+                    if (transaction != null)
+                    {
+                        transaction.Rollback();
+                    }
+                    Console.WriteLine("Error en la transacción: " + ex.Message);
+                }
             }
         }
-
-        // Método para obtener los tipos de datos de los campos en una tabla
         public string[] ObtenerTipo(string sTabla)
         {
             string[] sCampos = new string[30];
             int iIndex = 0;
-            OdbcConnection conn = null;
 
-            try
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                conn = cn.ProbarConexion();
-                OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla + "", conn);
-                OdbcDataReader reader = command.ExecuteReader();
-
-                while (reader.Read())
+                try
                 {
-                    sCampos[iIndex] = LimpiarTipo(reader.GetValue(1).ToString());
-                    iIndex++;
+                    using (OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla, connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                sCampos[iIndex] = LimpiarTipo(reader.GetValue(1).ToString());
+                                iIndex++;
+                            }
+                        }
+                    }
                 }
-
-                reader.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message.ToString() + " \nError en obtenerTipo, revise los parámetros de la tabla  \n -" + sTabla.ToUpper() + "\n -");
-            }
-            finally
-            {
-                if (conn != null && conn.State == ConnectionState.Open)
+                catch (Exception ex)
                 {
-                    conn.Close();
-                    Console.WriteLine("Conexión cerrada después de obtener el tipo de los campos");
+                    Console.WriteLine(ex.Message.ToString() + " \nError en obtenerTipo, revise los parámetros de la tabla  \n -" + sTabla.ToUpper() + "\n -");
                 }
             }
 
             return sCampos;
         }
-        //******************************************** CODIGO HECHO POR PABLO FLORES ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR JOSUE CACAO ***************************** 
-        // Método para obtener las llaves de los campos en una tabla
         public string[] ObtenerLLave(string sTabla)
         {
             string[] sCampos = new string[30];
             int iIndex = 0;
-            try
-            {
-                OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla + "", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
 
-                while (reader.Read())
+            using (OdbcConnection connection = cn.ProbarConexion())
+            {
+                try
                 {
-                    sCampos[iIndex] = reader.GetValue(3).ToString();
-                    iIndex++;
-
+                    using (OdbcCommand command = new OdbcCommand("DESCRIBE " + sTabla, connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                sCampos[iIndex] = reader.GetValue(3).ToString();
+                                iIndex++;
+                            }
+                        }
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message.ToString() + " \nError en obtenerTipo, revise los parametros de la tabla  \n -" + sTabla + "\n -");
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message.ToString() + " \nError en obtenerTipo, revise los parámetros de la tabla  \n -" + sTabla + "\n -");
+                }
             }
 
             return sCampos;
         }
 
-        // Método para obtener los ítems de un ComboBox desde la base de datos
         public Dictionary<string, string> ObtenerItems(string sTabla, string sCampoClave, string sCampoDisplay)
         {
             Dictionary<string, string> dicItems = new Dictionary<string, string>();
-            try
-            {
-                OdbcCommand command = new OdbcCommand($"SELECT {sCampoClave}, {sCampoDisplay} FROM {sTabla} WHERE estado = 1", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
 
-                while (reader.Read())
+            using (OdbcConnection connection = cn.ProbarConexion())
+            {
+                try
                 {
-                    dicItems.Add(reader.GetValue(0).ToString(), reader.GetValue(1).ToString());
+                    using (OdbcCommand command = new OdbcCommand($"SELECT {sCampoClave}, {sCampoDisplay} FROM {sTabla} WHERE estado = 1", connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                dicItems.Add(reader.GetValue(0).ToString(), reader.GetValue(1).ToString());
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message + " \nError en obtenerItems, revise los parámetros \n -" + sTabla + "\n -" + sCampoClave);
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message + " \nError en obtenerItems, revise los parámetros \n -" + sTabla + "\n -" + sCampoClave);
-            }
+
             return dicItems;
         }
-        //******************************************** CODIGO HECHO POR JOSUE CACAO ***************************** 
-
-
-        //******************************************** CODIGO HECHO POR MATY MANCILLA ***************************** 
         // Método que limpia el tipo de dato de una cadena, eliminando la dimensión del campo
         string LimpiarTipo(string sCadena)
         {
@@ -635,164 +655,193 @@ namespace Capa_Modelo_Navegador
 
             return sNuevaCadena;
         }
-
-        // Método para obtener la llave de un campo en la tabla
         public string LlaveCampo(string sTabla, string sCampo, string sValor)
         {
             string sLlave = "";
-            try
-            {
-                OdbcCommand command = new OdbcCommand("SELECT * FROM " + sTabla + " where " + sCampo + " = '" + sValor + "' ;", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
-                reader.Read();
-                sLlave = reader.GetValue(0).ToString();
-            }
-            catch (Exception)
-            {
 
+            using (OdbcConnection connection = cn.ProbarConexion())
+            {
+                try
+                {
+                    using (OdbcCommand command = new OdbcCommand("SELECT * FROM " + sTabla + " where " + sCampo + " = '" + sValor + "' ;", connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                sLlave = reader.GetValue(0).ToString();
+                            }
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                }
             }
+
             return sLlave;
         }
 
-        // Método para obtener la llave de un campo en reverso (no está claro para qué se usa)
         public string LlaveCampoReverso(string sTabla, string sCampo, string sValor)
         {
             string sLlave = "";
             string[] sCampos = ObtenerCampos(sTabla);
-            try
+
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                string sValorFormateado = "'" + sValor + "'";
-
-                string sQuery = $"SELECT {sCampo} FROM {sTabla} WHERE {sCampos[0]} = {sValorFormateado};";
-
-                OdbcCommand command = new OdbcCommand(sQuery, cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
-                if (reader.Read())
+                try
                 {
-                    sLlave = reader.GetValue(0).ToString();
+                    string sValorFormateado = "'" + sValor + "'";
+                    string sQuery = $"SELECT {sCampo} FROM {sTabla} WHERE {sCampos[0]} = {sValorFormateado};";
+
+                    using (OdbcCommand command = new OdbcCommand(sQuery, connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                sLlave = reader.GetValue(0).ToString();
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Dio errore: " + ex.ToString());
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Dio errore: " + ex.ToString());
-            }
+
             return sLlave;
         }
-        //******************************************** CODIGO HECHO POR MATY MANCILLA ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR BRAYAN HERNANDEZ ***************************** 
-        // Método para obtener el ID del módulo basado en el ID de la aplicación
         public string IdModulo(string sAplicacion)
         {
             string sLlave = "";
-            try
+
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                OdbcCommand command = new OdbcCommand("SELECT * FROM tbl_aplicacion" + " where" + " PK_id_aplicacion= " + sAplicacion + " ;", cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
-                reader.Read();
-                sLlave = reader.GetValue(0).ToString();
+                try
+                {
+                    using (OdbcCommand command = new OdbcCommand("SELECT * FROM tbl_aplicacion where PK_id_aplicacion= " + sAplicacion + " ;", connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                sLlave = reader.GetValue(0).ToString();
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Dio errore " + "SELECT * FROM tbl_aplicacion where PK_id_aplicacion= " + sAplicacion + " ;" + ex.ToString());
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Dio errore " + "SELECT * FROM tbl_aplicacion" + " where" + " PK_id_aplicacion= " + sAplicacion + " ;" + ex.ToString());
-            }
+
             return sLlave;
         }
 
-        // Método para ejecutar una consulta SQL
         public void EjecutarQuery(string sQuery)
         {
-            try
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                OdbcCommand consulta = new OdbcCommand(sQuery, cn.ProbarConexion());
-                consulta.ExecuteNonQuery();
-            }
-            catch (OdbcException ex)
-            {
-                Console.WriteLine(ex.ToString());
+                try
+                {
+                    using (OdbcCommand consulta = new OdbcCommand(sQuery, connection))
+                    {
+                        consulta.ExecuteNonQuery();
+                    }
+                }
+                catch (OdbcException ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
             }
         }
-        //******************************************** CODIGO HECHO POR BRAYAN HERNANDEZ ***************************** 
 
-
-        //******************************************** CODIGO HECHO POR VICTOR CASTELLANOS ***************************** 
-        // Método para obtener la clave primaria de una tabla
         public string ObtenerClavePrimaria(string sNombreTabla)
         {
             string sClavePrimaria = "";
-            try
+
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                string sQuery = $"SHOW KEYS FROM {sNombreTabla} WHERE Key_name = 'PRIMARY';";
-
-                OdbcCommand command = new OdbcCommand(sQuery, cn.ProbarConexion());
-
-                OdbcDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
+                try
                 {
-                    sClavePrimaria = reader["Column_name"].ToString();
-                    Console.WriteLine($"Clave primaria de {sNombreTabla}: {sClavePrimaria}");
-                }
-                else
-                {
-                    throw new Exception("No se encontró una clave primaria para la tabla: " + sNombreTabla);
-                }
+                    string sQuery = $"SHOW KEYS FROM {sNombreTabla} WHERE Key_name = 'PRIMARY';";
 
-                reader.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error al obtener la clave primaria de la tabla " + sNombreTabla + ": " + ex.ToString());
+                    using (OdbcCommand command = new OdbcCommand(sQuery, connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                sClavePrimaria = reader["Column_name"].ToString();
+                                Console.WriteLine($"Clave primaria de {sNombreTabla}: {sClavePrimaria}");
+                            }
+                            else
+                            {
+                                throw new Exception("No se encontró una clave primaria para la tabla: " + sNombreTabla);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error al obtener la clave primaria de la tabla " + sNombreTabla + ": " + ex.ToString());
+                }
             }
 
             return sClavePrimaria;
         }
 
-        // Método para obtener la clave foránea que referencia a otra tabla
         public string ObtenerClaveForanea(string sTablaOrigen, string sTablaReferencia)
         {
             string sClaveForanea = null;
 
-            try
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                string sQuery = $@"
-            SELECT COLUMN_NAME 
-            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-            WHERE TABLE_SCHEMA = DATABASE()
-            AND TABLE_NAME = '{sTablaOrigen}' 
-            AND REFERENCED_TABLE_NAME = '{sTablaReferencia}';";
-
-                OdbcCommand command = new OdbcCommand(sQuery, cn.ProbarConexion());
-                OdbcDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
+                try
                 {
-                    sClaveForanea = reader.GetString(0);
-                    Console.WriteLine($"Clave foránea de {sTablaOrigen} que referencia a {sTablaReferencia}: {sClaveForanea}");
+                    string sQuery = $@"
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = '{sTablaOrigen}' 
+                AND REFERENCED_TABLE_NAME = '{sTablaReferencia}';";
+
+                    using (OdbcCommand command = new OdbcCommand(sQuery, connection))
+                    {
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                sClaveForanea = reader.GetString(0);
+                                Console.WriteLine($"Clave foránea de {sTablaOrigen} que referencia a {sTablaReferencia}: {sClaveForanea}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"No se encontró clave foránea en {sTablaOrigen} que referencia a {sTablaReferencia}");
+                            }
+                        }
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"No se encontró clave foránea en {sTablaOrigen} que referencia a {sTablaReferencia}");
+                    Console.WriteLine("Error al obtener clave foránea: " + ex.Message);
                 }
-                reader.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error al obtener clave foránea: " + ex.Message);
             }
 
             return sClaveForanea;
         }
-      
-            // Asumiendo que tienes una clase para la conexión
 
-            // Método para obtener las relaciones de claves foráneas desde la base de datos
-            public (string tablaRelacionada, string campoClave, string campoDisplay) ObtenerRelacionesForaneas(string sTablaOrigen, string sCampo)
+        public (string tablaRelacionada, string campoClave, string campoDisplay) ObtenerRelacionesForaneas(string sTablaOrigen, string sCampo)
+        {
+            string tablaRelacionada = null;
+            string campoClave = null;
+
+            using (OdbcConnection connection = cn.ProbarConexion())
             {
-                string tablaRelacionada = null;
-                string campoClave = null;
-
                 try
                 {
                     string sQuery = $@"
@@ -802,44 +851,45 @@ namespace Capa_Modelo_Navegador
                 AND TABLE_NAME = '{sTablaOrigen}' 
                 AND COLUMN_NAME = '{sCampo}';";
 
-                    OdbcCommand command = new OdbcCommand(sQuery, cn.ProbarConexion());
-                    OdbcDataReader reader = command.ExecuteReader();
-
-                    if (reader.Read())
+                    using (OdbcCommand command = new OdbcCommand(sQuery, connection))
                     {
-                        tablaRelacionada = reader.GetString(0);  // Obtiene la tabla relacionada
-                        campoClave = reader.GetString(1);        // Obtiene la clave relacionada (ID)
+                        using (OdbcDataReader reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                tablaRelacionada = reader.GetString(0);
+                                campoClave = reader.GetString(1);
 
-                        Console.WriteLine($"Clave foránea de {sTablaOrigen} que referencia a {tablaRelacionada}: {campoClave}");
+                                Console.WriteLine($"Clave foránea de {sTablaOrigen} que referencia a {tablaRelacionada}: {campoClave}");
 
-                        // El campo display ahora es siempre el campo clave (ID)
-                        string campoDisplay = campoClave;
+                                string campoDisplay = campoClave;
 
-                        return (tablaRelacionada, campoClave, campoDisplay);
+                                return (tablaRelacionada, campoClave, campoDisplay);
+                            }
+                            else
+                            {
+                                Console.WriteLine($"No se encontró clave foránea en {sTablaOrigen} para el campo {sCampo}");
+                            }
+                        }
                     }
-                    else
-                    {
-                        Console.WriteLine($"No se encontró clave foránea en {sTablaOrigen} para el campo {sCampo}");
-                    }
-
-                    reader.Close();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error al obtener clave foránea: " + ex.Message);
                 }
-
-                return (tablaRelacionada, campoClave, campoClave); // Ambos campoClave y campoDisplay serán el ID
             }
-        
+
+            return (tablaRelacionada, campoClave, campoClave);
+        }
 
         public OdbcDataAdapter llenarTblAyuda(string tabla)
         {
             string sql = "SELECT * FROM " + tabla + " ;";
-            OdbcDataAdapter dataTable = new OdbcDataAdapter(sql, cn.ProbarConexion());
-            return dataTable;
+            using (OdbcConnection connection = cn.ProbarConexion())
+            {
+                return new OdbcDataAdapter(sql, connection);
+            }
         }
-
         //******************************************** CODIGO HECHO POR VICTOR CASTELLANOS ***************************** 
     }
 }
