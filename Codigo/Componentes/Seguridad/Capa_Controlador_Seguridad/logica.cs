@@ -1077,5 +1077,16 @@ namespace Capa_Controlador_Seguridad
         }
 
 
+        /*********Ismar Cortez 10/2/25**********/
+
+        public string ObtenerIdUsuario(string sUsername)
+        {
+            sentencia sn = new sentencia();
+            return sn.ObtenerIdUsuarioPorUsername(sUsername);
+        }
+
+        /***************************************/
+
+
     }
 }

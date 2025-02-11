@@ -1,17 +1,19 @@
 using Capa_Vista_Seguridad;
+using Capa_Controlador_Seguridad;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Capa_Vista_Nominas;
 
-//using Capa_Vista_Banco;      
+using Capa_Vista_Banco;
 using Capa_Vista_Contabilidad;
 //using Capa_Vista_Produccion;
 //using Capa_Vista_Banco;
@@ -77,12 +79,58 @@ namespace Interfac_V3
             var usuario = new Capa_Vista_Seguridad.frm_login();
             string idUsuario = usuario.Txt_usuario.ToString();
 
-            frm_login login = new frm_login();
-            login.ShowDialog();
+            //frm_login login = new frm_login();
+            //login.ShowDialog();
 
-            MDI_Seguridad formMDI = new MDI_Seguridad(idUsuario);
-            formMDI.Show();
-            this.Hide();
+            logica logica = new logica();
+
+            try
+            {
+                // Lista de nombres de permisos que corresponden a las acciones posibles.
+                string[] arrPermisosText = { "INGRESAR", "BUSCAR", "MODIFICAR", "ELIMINAR", "IMPRIMIR" };
+
+                // Obtener el ID del usuario una sola vez
+                string sIdUsuarioX = UsuarioSesion.GetIdUsuario();
+                string sIdUsuario1 = logica.ObtenerIdUsuario(sIdUsuarioX);
+
+                bool tieneTodosLosPermisos = true;
+
+                for (int iIndex = 0; iIndex < arrPermisosText.Length; iIndex++)
+                {
+                    // Verifica si el usuario tiene permiso para la acción correspondiente.
+                    bool bTienePermiso = logica.ConsultarPermisos(sIdUsuario1, "1000", iIndex + 1);
+
+                    if (!bTienePermiso)
+                    {
+                        tieneTodosLosPermisos = false;
+                        break; // Si falta un permiso, no es necesario seguir verificando.
+                    }
+                }
+
+                // Si tiene todos los permisos, muestra el módulo MDI_Seguridad.
+                if (tieneTodosLosPermisos)
+                {
+                    MDI_Seguridad formMDI = new MDI_Seguridad(UsuarioSesion.GetIdUsuario());
+                    formMDI.Show();
+                    this.Hide(); // Oculta el formulario actual
+                }
+                else
+                {
+                    MessageBox.Show("No tienes todos los permisos requeridos para acceder a este módulo.",
+                                    "Acceso Denegado",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Captura errores y muestra un mensaje en consola
+                Console.WriteLine("Error al configurar los botones y permisos: " + ex.Message);
+                MessageBox.Show("Ocurrió un error al verificar los permisos. Contacta al administrador.",
+                                "Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+            }
         }
 
         private void btnSeguridad_MouseEnter(object sender, EventArgs e)
@@ -180,8 +228,8 @@ namespace Interfac_V3
         private void Btn_Bancos_Click(object sender, EventArgs e)
         {
             // Redirige a Modulo Bancos
-            //frm_principal_bancos banco = new frm_principal_bancos(UsuarioSesion.GetIdUsuario());
-            //banco.Show();
+            frm_principal_bancos banco = new frm_principal_bancos(UsuarioSesion.GetIdUsuario());
+            banco.Show();
 
         }
 
@@ -196,8 +244,8 @@ namespace Interfac_V3
 
         private void Btn_Produccion_Click(object sender, EventArgs e)
         {
-            /*MDI_Produccion produccion = new MDI_Produccion(UsuarioSesion.GetIdUsuario());
-            produccion.Show();*/
+            //MDI_Produccion produccion = new MDI_Produccion(UsuarioSesion.GetIdUsuario());
+            //produccion.Show();
         }
 
         private void Btn_Produccion_MouseEnter(object sender, EventArgs e)
