@@ -171,6 +171,8 @@ namespace Capa_Vista_Consulta
             this.Controls.Add(this.btnCancelar2);
             this.Controls.Add(this.btnConsultar2);
             this.Font = new System.Drawing.Font("Times New Roman", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "ConsultaSimple";
             this.Text = "ConsultaSimple";
             this.Load += new System.EventHandler(this.ConsultaSimple_Load);
