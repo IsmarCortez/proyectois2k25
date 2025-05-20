@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Web;
 
 namespace Portal_Web.Models
 {
@@ -16,6 +15,17 @@ namespace Portal_Web.Models
 
         public byte[] curriculum { get; set; }
 
-        public bool estado { get; set; } = true;
+        public byte[] documento_entrevista { get; set; }
+
+        public byte[] pruebas_psicometricas { get; set; }
+
+        public decimal? prueba_logica { get; set; }
+        public decimal? prueba_numerica { get; set; }
+        public decimal? prueba_verbal { get; set; }
+        public decimal? razonamiento { get; set; }
+        public decimal? prueba_tecnologica { get; set; }
+
+        [StringLength(255)]
+        public string prueba_personalidad { get; set; }
     }
 }

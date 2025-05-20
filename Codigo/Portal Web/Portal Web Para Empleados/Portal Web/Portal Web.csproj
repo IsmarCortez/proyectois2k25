@@ -246,6 +246,7 @@
     </Compile>
     <Compile Include="Models\Asistencia.cs" />
     <Compile Include="Models\Contrato.cs" />
+    <Compile Include="Models\DashboardViewModel.cs" />
     <Compile Include="Models\DbContext.cs" />
     <Compile Include="Models\Disponibilidad.cs" />
     <Compile Include="Models\Empleado.cs" />

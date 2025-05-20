@@ -8,7 +8,6 @@ namespace Portal_Web.Models
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext() : base("DefaultConnection") { }
-
         public DbSet<Usuarios> Usuarios { get; set; }
         public DbSet<Rol> Roles { get; set; }
         public DbSet<Empleado> tbl_empleados { get; set; }
@@ -24,3 +23,5 @@ namespace Portal_Web.Models
         public DbSet<Expediente> Tbl_expedientes { get; set; }
     }
 }
+
+
