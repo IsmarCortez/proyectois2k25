@@ -14,7 +14,30 @@ namespace Portal_Web.Controllers
 
         public ActionResult index()
         {
-            return View();
+            int userId = Convert.ToInt32(Session["UserId"]);
+
+            var hoy = DateTime.Today;
+            var primerDiaDelMes = new DateTime(hoy.Year, hoy.Month, 1);
+
+            var horasTrabajadas = db.tbl_asistencias
+                .Where(a => a.fk_clave_empleado == userId && a.fecha >= primerDiaDelMes && a.hora_entrada != null && a.hora_salida != null)
+                .ToList()
+                .Sum(a => (a.hora_salida.Value - a.hora_entrada.Value).TotalHours);
+
+            int diasVacaciones = db.tbl_asignacion_vacaciones
+                .Where(v => v.fk_clave_empleado == userId)
+                .ToList()
+                .Sum(v => (v.asignacion_vacaciones_fecha_fin - v.asignacion_vacaciones_fecha_inicio).Days + 1);
+
+            // Supuesto por ahora: documentos pendientes = 3 (puedes cambiarlo luego si tienes una tabla real)
+
+            var model = new DashboardViewModel
+            {
+                HorasTrabajadasEsteMes = (int)horasTrabajadas,
+                DiasVacacionesDisponibles = diasVacaciones
+            };
+
+            return View(model);
         }
         //Vista para el perfil
         public ActionResult perfil()
@@ -117,16 +140,16 @@ namespace Portal_Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                if(model.Curriculum != null && model.Curriculum.ContentLength > 0)
+                if (model.Curriculum != null && model.Curriculum.ContentLength > 0)
                 {
                     var ext = Path.GetExtension(model.Curriculum.FileName).ToLower();
-                    if(ext != ".pdf")
+                    if (ext != ".pdf")
                     {
                         ModelState.AddModelError("Curriculum", "Solo se permiten archivos PDF.");
                     }
                     else
                     {
-                        byte[] fileData;
+                        // Guarda el archivo en la carpeta física
                         var rutaFisica = @"C:\Users\oscar\OneDrive\Escritorio\Ing. De Software\proyectois2k25\Archivos de Reclutamiento";
                         var nombreArchivo = Path.GetFileName(model.Curriculum.FileName);
 
@@ -136,19 +159,24 @@ namespace Portal_Web.Controllers
                         }
                         var rutaCompleta = Path.Combine(rutaFisica, nombreArchivo);
                         model.Curriculum.SaveAs(rutaCompleta);
-                        
+
+                        // Lee el archivo en bytes para guardar en base de datos
+                        byte[] fileData;
                         using (var binaryReader = new BinaryReader(model.Curriculum.InputStream))
                         {
                             fileData = binaryReader.ReadBytes(model.Curriculum.ContentLength);
                         }
+
+                        // Crea objeto Expediente sin la propiedad 'estado' porque ya no existe
                         var expediente = new Expediente
                         {
                             Fk_id_postulante = model.Fk_id_postulante,
-                            curriculum = fileData,
-                            estado = true
+                            curriculum = fileData
                         };
+
                         db.Tbl_expedientes.Add(expediente);
                         db.SaveChanges();
+
                         TempData["Mensaje"] = $"Expediente guardado con ID #{expediente.Pk_id_expediente}";
                         return RedirectToAction("Gracias");
                     }
@@ -158,6 +186,7 @@ namespace Portal_Web.Controllers
                     ModelState.AddModelError("Curriculum", "Debe seleccionar un archivo PDF.");
                 }
             }
+
             ViewBag.Fk_id_postulante = new SelectList(db.Tbl_postulante.ToList(), "Pk_id_postulante", "nombre_postulante", model.Fk_id_postulante);
             return View(model);
         }
