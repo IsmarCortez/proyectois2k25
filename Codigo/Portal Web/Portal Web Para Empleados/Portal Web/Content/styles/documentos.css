@@ -1,84 +1,95 @@
 ﻿body {
-    background-color: #f1f3f9;
-    font-family: 'Inter', sans-serif;
-}
-
-.container {
-    max-width: 900px;
-    margin: 50px auto;
-    padding: 20px;
-}
-
-.card {
-    background-color: white;
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
+    margin: 0;
+    padding: 0;
+    font-family: 'Dosis', sans-serif;
+    background-color: #f4f4f4;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin-bottom: 30px;
+    height: 100vh;
 }
 
-.btn-purple {
-    background-color: #7B2FF7;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-    .btn-purple:hover {
-        background-color: #6823cd;
-    }
-
-.document-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #f9fafc;
+.upload-card {
+    background-color: #fff;
     border-radius: 12px;
-    padding: 15px 20px;
-    margin-bottom: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2.5rem 3rem;
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
 }
 
-.document-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-    .document-info i {
-        font-size: 28px;
-        color: #7B2FF7;
-    }
-
-.document-text {
-    line-height: 1.2;
-}
-
-    .document-text .title {
+    .upload-card h1 {
+        font-size: 1.8rem;
+        color: #333;
+        margin-bottom: 1.5rem;
         font-weight: 600;
     }
 
-    .document-text .details {
-        color: #6c757d;
+    .upload-card form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    .upload-card label {
+        text-align: left;
+        font-weight: 500;
+        font-size: 0.95rem;
+        color: #444;
+    }
+
+    .upload-card select,
+    .upload-card input[type="file"] {
+        padding: 0.7rem;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        transition: border 0.3s ease;
+    }
+
+        .upload-card select:focus,
+        .upload-card input[type="file"]:focus {
+            border-color: #6c1aef;
+            outline: none;
+        }
+
+    .upload-card button {
+        background-color: #6c1aef;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.8rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .upload-card button:hover {
+            background-color: #5615c7;
+            transform: translateY(-1px);
+        }
+
+    .upload-card .alert {
+        background-color: #ffe5e5;
+        color: #d8000c;
+        padding: 0.8rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
         font-size: 0.9rem;
+        text-align: left;
     }
 
-.document-actions i {
-    margin-left: 20px;
-    font-size: 18px;
-    color: #7B2FF7;
-    cursor: pointer;
+    .upload-card .field-validation-error {
+        color: #d8000c;
+        font-size: 0.85rem;
+        text-align: left;
+    }
+
+@media (max-width: 480px) {
+    .upload-card {
+        padding: 2rem;
+        margin: 1rem;
+    }
 }
-
-    .document-actions i:hover {
-        color: #5a1fc0;
-    }
-

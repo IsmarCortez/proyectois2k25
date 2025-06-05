@@ -243,10 +243,10 @@ namespace Capa_Vista_RRHH
             //frm_horasextra deptos = new frm_horasextra();
             //deptos.Show();
 
-            Capa_Vista_HorasExtras.frm_horasextra GD = new Capa_Vista_HorasExtras.frm_horasextra();
+            /*Capa_Vista_HorasExtras.frm_horasextra GD = new Capa_Vista_HorasExtras.frm_horasextra();
             GD.MdiParent = this;
             CentrarFormulario(GD);
-            GD.Show();
+            GD.Show();*/
 
         }
 
@@ -291,10 +291,10 @@ namespace Capa_Vista_RRHH
             //frm_Promociones deptos = new frm_Promociones(idUsuario);
             //deptos.Show();
 
-            frm_Promociones GD = new frm_Promociones(idUsuario);
+            /*frm_Promociones GD = new frm_Promociones(idUsuario);
             GD.MdiParent = this;
             CentrarFormulario(GD);
-            GD.Show();
+            GD.Show();*/
 
 
 
@@ -305,10 +305,10 @@ namespace Capa_Vista_RRHH
             //frm_Carrera deptos = new frm_Carrera();
             //deptos.Show();
 
-            frm_Carrera GD = new frm_Carrera(idUsuario);
+            /*frm_Carrera GD = new frm_Carrera(idUsuario);
             GD.MdiParent = this;
             CentrarFormulario(GD);
-            GD.Show();
+            GD.Show();*/
         }
 
         private void capacitacionesToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -518,10 +518,10 @@ namespace Capa_Vista_RRHH
             //frm_evidencias GD = new frm_evidencias(idUsuario);
             //GD.Show();
 
-            frm_evidencias GD = new frm_evidencias(idUsuario);
+            /*frm_evidencias GD = new frm_evidencias(idUsuario);
             GD.MdiParent = this;
             CentrarFormulario(GD);
-            GD.Show();
+            GD.Show();*/
         }
 
         private void aplicarSanciónToolStripMenuItem_Click(object sender, EventArgs e)
@@ -529,10 +529,10 @@ namespace Capa_Vista_RRHH
             //frm_sanciones GD = new frm_sanciones(idUsuario);
             //GD.Show();
 
-            frm_sanciones GD = new frm_sanciones(idUsuario);
+            /*frm_sanciones GD = new frm_sanciones(idUsuario);
             GD.MdiParent = this;
             CentrarFormulario(GD);
-            GD.Show();
+            GD.Show();*/
 
 
 
@@ -574,6 +574,12 @@ namespace Capa_Vista_RRHH
             GD.MdiParent = this;
             CentrarFormulario(GD);
             GD.Show();
+        }
+
+        private void mantenimientoAlumnosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Mantenimiento_Alumnos mantenimiento_Alumnos = new Mantenimiento_Alumnos();
+            mantenimiento_Alumnos.Show();
         }
     }
 }
