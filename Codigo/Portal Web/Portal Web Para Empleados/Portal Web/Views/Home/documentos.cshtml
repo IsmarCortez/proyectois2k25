@@ -3,32 +3,46 @@
     Layout = null;
 }
 
-<h2>Subir Currículum PDF</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Subir Currículum</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dosis&display=swap" rel="stylesheet" />
+    <link href="~/Content/custom-style.css" rel="stylesheet" />
+    <link href="~/Content/styles/documentos.css" rel="stylesheet"/>
+</head>
+<body>
+    <div class="upload-card">
+        <h1>Subir Currículum</h1>
 
-@if (TempData["Mensaje"] != null)
-{
-    <div style="color: green; font-weight: bold;">@TempData["Mensaje"]</div>
-}
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="alert">@TempData["Mensaje"]</div>
+        }
 
-@using (Html.BeginForm("documentos", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
-{
-    @Html.AntiForgeryToken()
+        @using (Html.BeginForm("documentos", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
 
-    <div>
-        <label for="Fk_id_postulante">Selecciona Postulante:</label>
-        @Html.DropDownListFor(m => m.Fk_id_postulante, (SelectList)ViewBag.Fk_id_postulante, "--Seleccione--")
-        @Html.ValidationMessageFor(m => m.Fk_id_postulante)
+            <div>
+                <label for="Fk_id_postulante">Postulante</label>
+                @Html.DropDownListFor(m => m.Fk_id_postulante, (SelectList)ViewBag.Fk_id_postulante, "--Seleccione--", new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.Fk_id_postulante, "", new { @class = "field-validation-error" })
+            </div>
+
+            <div>
+                <label for="Curriculum">Currículum (PDF)</label>
+                <input type="file" name="Curriculum" id="Curriculum" accept="application/pdf" />
+                @Html.ValidationMessageFor(m => m.Curriculum, "", new { @class = "field-validation-error" })
+            </div>
+
+            <button type="submit">Subir</button>
+        }
     </div>
 
-    <div>
-        <label for="Curriculum">Archivo PDF del Currículum:</label>
-        <input type="file" name="Curriculum" id="Curriculum" accept="application/pdf" />
-        @Html.ValidationMessageFor(m => m.Curriculum)
-    </div>
-
-    <button type="submit">Subir</button>
-}
-
-@section Scripts {
-    @Scripts.Render("~/bundles/jqueryval")
-}
+    @section Scripts {
+        @Scripts.Render("~/bundles/jqueryval")
+    }
+</body>
+</html>
